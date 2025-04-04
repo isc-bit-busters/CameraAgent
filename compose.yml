@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  prosody:
+    image: prosody/prosody:latest
+    container_name: prosody
+    restart: unless-stopped
+    networks:
+      - xmpp_network
+    ports:
+      - "5222:5222"
+      - "5269:5269"
+      - "5280:5280"
+      - "5347:5347"
+    volumes:
+      - prosody_data:/var/lib/prosody
+      - prosody_config:/etc/prosody
+      - prosody_logs:/var/log/prosody
+
+  agent:
+    build: .
+    container_name: agent
+    restart: unless-stopped
+    networks:
+      - xmpp_network
+    depends_on:
+      - prosody
+    environment:
+      XMPP_SERVER: prosody
+      XMPP_PORT: 5222
+      XMPP_JID: "agent@localhost"
+      XMPP_PASSWORD: "top_secret"
+
+networks:
+  xmpp_network:
+
+volumes:
+  prosody_data:
+  prosody_config:
+  prosody_logs:
