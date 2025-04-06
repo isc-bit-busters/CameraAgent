@@ -7,10 +7,17 @@ from spade.message import Message
 
 
 class CameraAgent(agent.Agent):
+    def __init__(self, jid, password):
+        super().__init__(jid, password)
+        
     class SendPhotoBehaviour(behaviour.OneShotBehaviour):
+        def __init__(self, requester_jid):
+            super().__init__()
+            self.requester_jid = requester_jid
+
         async def run(self):
             print("Capturing image...")
-            camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            camera = cv2.VideoCapture(0)
 
             await asyncio.sleep(2)
 
@@ -20,7 +27,6 @@ class CameraAgent(agent.Agent):
                 print("Failed to capture image.")
                 return
 
-
             filename = "photo.jpg"
             cv2.imwrite(filename, frame)
 
@@ -28,7 +34,7 @@ class CameraAgent(agent.Agent):
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
 
-            msg = Message(to=self.agent.receiver_jid)
+            msg = Message(to=self.requester_jid)
             msg.set_metadata("performative", "inform")
             msg.body = encoded_img
 
@@ -37,10 +43,12 @@ class CameraAgent(agent.Agent):
             
     class WaitForRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
-            msg = await self.receive(timeout=10)
+            print("Waiting for request...")
+            msg = await self.receive(timeout=9999)
             if msg:
                 print("Received camera image request.")
-                self.agent.add_behaviour(self.agent.SendPhotoBehaviour())
+                requester_jid = str(msg.sender)
+                self.agent.add_behaviour(self.agent.SendPhotoBehaviour(requester_jid))
 
     async def setup(self):
         print(f"{self.jid} is ready.")
