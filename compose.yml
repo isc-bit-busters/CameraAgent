@@ -1,10 +1,10 @@
-version: '3.8'
-
 services:
   prosody:
     build: ./prosody
     container_name: prosody
     restart: unless-stopped
+    networks:
+      - xmpp_network
     ports:
       - "5222:5222"  # XMPP client connections
       - "5269:5269"  # Server-to-server connections
@@ -12,6 +12,8 @@ services:
     volumes:
       - ./prosody/prosody-config:/etc/prosody   # Place your custom configuration files here
       - ./prosody/prosody-data:/var/lib/prosody   # Persistent data storage
+
+    command: ["prosody"]
     # Optional environment variables – adjust as needed for your image
     # environment:
     #   - PROSODY_DOMAIN=example.com
@@ -28,8 +30,14 @@ services:
     environment:
       XMPP_SERVER: prosody
       XMPP_PORT: 5222
-      XMPP_JID: "agent@localhost"
+      XMPP_USERNAME: "camera_agent"
       XMPP_PASSWORD: "top_secret"
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./src:/app/src  # Map local src directory to /app/src in the container
+    devices:
+      - /dev/video0:/dev/video0  # Give access to the camera device
+    privileged: true
 
 networks:
   xmpp_network:

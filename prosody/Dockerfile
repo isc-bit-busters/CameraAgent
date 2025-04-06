@@ -1,12 +1,13 @@
-FROM prosody/prosody:latest
+FROM alpine:latest
 
-RUN apt-get update && apt-get install -y openssl && apt-get clean
+RUN apk update && \
+    apk add --no-cache prosody openssl su-exec && \
+    mkdir -p /etc/prosody/certs
 
-RUN mkdir -p /etc/prosody/certs
-
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY ./entrypoint.sh /tmp/entrypoint.sh
+RUN tr -d '\r' < /tmp/entrypoint.sh > /usr/local/bin/entrypoint.sh && \
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    rm /tmp/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
