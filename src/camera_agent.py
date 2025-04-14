@@ -5,10 +5,7 @@ import aiofiles
 from spade import agent, behaviour
 from spade.message import Message
 
-SEND_PHOTO_INTERVAL = 5 # seconds
-
 class CameraAgent(agent.Agent):
-
     def __init__(self, jid, password):
         super().__init__(jid, password)
         self.last_sent_time = None
@@ -16,15 +13,17 @@ class CameraAgent(agent.Agent):
         self.camera_stream = None
         
     class SendPhotoBehaviour(behaviour.OneShotBehaviour):
-        def __init__(self):
+        def __init__(self, jid, thread):
             super().__init__()
+            self.jid = jid
+            self.thread = thread 
 
         async def run(self):
             print("Capturing image...")
 
             # Initialize the camera
             if self.agent.camera_stream is None:
-                self.agent.camera_stream = cv2.VideoCapture(0)
+                self.agent.camera_stream = cv2.VideoCapture(1)
 
             camera = self.agent.camera_stream
             await asyncio.sleep(2)
@@ -44,15 +43,15 @@ class CameraAgent(agent.Agent):
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
 
-            for agent in self.agent.registered_agents:
-                msg = Message(to=agent)
-                msg.set_metadata("performative", "inform")
-                msg.body = f"image {encoded_img}"
+            msg = Message(to=self.jid)
+            msg.set_metadata("performative", "inform")
+            msg.body = f"image {encoded_img}"
+            msg.thread = self.thread
 
-                await self.send(msg)
-                print("Photo sent to ", agent)
+            await self.send(msg)
+            print("Photo sent to ", agent)
 
-    class ListenToRegisterMessageBehaviour(behaviour.CyclicBehaviour):
+    class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
             print("Waiting for request...")
             msg = await self.receive(timeout=9999)
@@ -61,28 +60,19 @@ class CameraAgent(agent.Agent):
                 thread = msg.thread
                 sender = str(msg.sender)
 
-                if command == "register":
-                    print("Received register request.")
-                    if sender not in self.agent.registered_agents:
-                        self.agent.registered_agents.append(sender)
-                        print(f"Registered agent: {sender}")
-                elif command == "unregister":
-                    print("Received unregister request.")
-                    if sender in self.agent.registered_agents:
-                        self.agent.registered_agents.remove(sender)
-                        print(f"Unregistered agent: {sender}")
+                if command == "request_image":
+                    print("Received image request.")
+                    send_photo_behaviour = self.agent.SendPhotoBehaviour(sender, thread)
+                    self.agent.add_behaviour(send_photo_behaviour)
                 else:
                     print("Received unknown command.")
 
             
     class PeriodicalSendImageBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
-            await asyncio.sleep(SEND_PHOTO_INTERVAL)
             send_photo_behaviour = self.agent.SendPhotoBehaviour()
             self.agent.add_behaviour(send_photo_behaviour)
 
     async def setup(self):
         print(f"{self.jid} is ready.")
-        # Instead of immediately sending a photo, wait for requests
-        self.add_behaviour(self.ListenToRegisterMessageBehaviour())
-        self.add_behaviour(self.PeriodicalSendImageBehaviour())
+        self.add_behaviour(self.ListenToImageRequestBehaviour())
