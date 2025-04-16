@@ -56,7 +56,7 @@ services:
     restart: unless-stopped
     environment:
       - BLE_ADDRESS=DF:CB:A0:71:A8:6C
-      - MQTT_BROKER=192.168.88.249
+      - MQTT_BROKER=192.168.88.253
       - MQTT_PORT=1883
       - MQTT_TOPIC=gate1/ir
     network_mode: host
@@ -72,7 +72,7 @@ services:
     restart: unless-stopped
     environment:
       - BLE_ADDRESS=:D7:09:01:AC:78:08
-      - MQTT_BROKER=192.168.88.249
+      - MQTT_BROKER=192.168.88.253
       - MQTT_PORT=1883
       - MQTT_TOPIC=gate2/ir
     network_mode: host
