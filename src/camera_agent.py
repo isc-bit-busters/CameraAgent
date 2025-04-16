@@ -22,11 +22,15 @@ class CameraAgent(agent.Agent):
             print("Capturing image...")
 
             # Initialize the camera
+            
             if self.agent.camera_stream is None:
-                self.agent.camera_stream = cv2.VideoCapture(1)
+                self.agent.camera_stream = cv2.VideoCapture(0)
+                self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
             camera = self.agent.camera_stream
-            await asyncio.sleep(2)
+
+            for _ in range(5):
+                camera.grab()
 
             ret, frame = camera.read()
 
@@ -34,34 +38,46 @@ class CameraAgent(agent.Agent):
                 print("Failed to capture image.")
                 return
 
-            filename = "photo.jpg"
+            # add timestamp to the image
+            from datetime import datetime
+            current_time = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            cv2.putText(frame, current_time, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+            print(f"Picture for {self.thread} taken at {current_time}.")
+
+            thread_stripped = self.thread.replace("-", "_")
+            filename = f"photo_{thread_stripped}.jpg"
             cv2.imwrite(filename, frame)
 
-            print("Image captured and saved as 'photo.jpg'.")
+            print(f"Image captured and saved as '{filename}'.")
 
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
 
             msg = Message(to=self.jid)
-            msg.set_metadata("performative", "inform")
             msg.body = f"image {encoded_img}"
-            msg.thread = self.thread
+            msg.thread = str(self.thread)
+            msg.metadata = {"thread": str(self.thread)}
+
+            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
 
             await self.send(msg)
-            print("Photo sent to ", agent)
+            print("Photo sent to ", str(self.jid))
+            print("Message: ", msg)
 
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
             print("Waiting for request...")
             msg = await self.receive(timeout=9999)
             if msg:
+                print(msg)
                 command = msg.body.strip().lower()
                 thread = msg.thread
                 sender = str(msg.sender)
 
                 if command == "request_image":
-                    print("Received image request.")
+                    print(f"Received image request from {sender} with thread {thread}.")
                     send_photo_behaviour = self.agent.SendPhotoBehaviour(sender, thread)
                     self.agent.add_behaviour(send_photo_behaviour)
                 else:
