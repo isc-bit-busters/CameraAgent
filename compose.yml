@@ -39,6 +39,18 @@ services:
       - /dev/video0:/dev/video0  # Give access to the camera device
     privileged: true
 
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"    # MQTT protocol
+      - "9001:9001"    # WebSocket protocol
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
+    restart: unless-stopped
+
 networks:
   xmpp_network:
 
