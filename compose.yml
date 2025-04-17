@@ -50,36 +50,18 @@ services:
       - "8084:8084"
       - "18083:18083"
 
-  gate1:
-    build: ./ble-gates/gate1
-    container_name: gate1
-    restart: unless-stopped
-    environment:
-      - BLE_ADDRESS=DF:CB:A0:71:A8:6C
-      - MQTT_BROKER=192.168.88.253
-      - MQTT_PORT=1883
-      - MQTT_TOPIC=gate1/ir
-    network_mode: host
-    privileged: true
-    volumes:
-      - /var/run/dbus:/var/run/dbus
-      - /dev:/dev
-
-
-  gate2:
-    build: ./ble-gates/gate2
-    container_name: gate2
-    restart: unless-stopped
-    environment:
-      - BLE_ADDRESS=:D7:09:01:AC:78:08
-      - MQTT_BROKER=192.168.88.253
-      - MQTT_PORT=1883
-      - MQTT_TOPIC=gate2/ir
-    network_mode: host
-    privileged: true
-    volumes:
-      - /var/run/dbus:/var/run/dbus
-      - /dev:/dev
+  gatehub:
+      build: ./ble-gates/gatehub
+      container_name: gatehub
+      restart: unless-stopped
+      environment:
+        - MQTT_BROKER=localhost
+        - MQTT_PORT=1883
+      network_mode: host
+      privileged: true
+      volumes:
+        - /var/run/dbus:/var/run/dbus
+        - /dev:/dev
 
 networks:
   xmpp_network:
