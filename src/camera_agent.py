@@ -25,10 +25,10 @@ def find_logitech_c920(max_cameras=10):
         print(f"Camera {index}: {int(width)}x{int(height)}")
  
         # Heuristic: C920 can do 1920x1080 easily
-        # if int(width) == 1920 and int(height) == 1080:
-        #     print(f"✅ Possible Logitech C920 found at index {index}")
-        #     cap.release()
-        #     return index
+        if int(width) == 1920 and int(height) == 1080:
+            print(f"✅ Possible Logitech C920 found at index {index}")
+            cap.release()
+            return index
  
         cap.release()
  
