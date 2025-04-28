@@ -11,7 +11,7 @@ def find_logitech_c920(max_cameras=10):
     print("Searching for Logitech C920...")
  
     for index in range(max_cameras):
-        cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)  # CAP_DSHOW: no delay on Windows
+        cap = cv2.VideoCapture(index)  
         if cap is None or not cap.isOpened():
             print(f"❌ Camera {index} not found.")
             continue
@@ -89,7 +89,7 @@ class CameraAgent(agent.Agent):
             thread_stripped = self.thread.replace("-", "_")
             filename = f"photo_{thread_stripped}.jpg"
             #resize the image to 640x480
-            frame = cv2.resize(frame, (640, 480))
+            # frame = cv2.resize(frame, (640, 480))
             cv2.imwrite(filename, frame)
 
             
