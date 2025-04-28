@@ -88,7 +88,12 @@ class CameraAgent(agent.Agent):
  
             thread_stripped = self.thread.replace("-", "_")
             filename = f"photo_{thread_stripped}.jpg"
+            #resize the image to 640x480
+            frame = cv2.resize(frame, (640, 480))
             cv2.imwrite(filename, frame)
+
+            
+
  
             print(f"Image captured and saved as '{filename}'.")
  
