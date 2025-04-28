@@ -103,7 +103,7 @@ s2s_secure_auth = false
 -- Enable rate limits for incoming client and server connections
 
 limits = {
-  stanza_size=512000;
+  stanza_size=1002000;
   c2s = {
     rate = "10kb/s";
   };
