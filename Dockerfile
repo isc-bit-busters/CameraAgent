@@ -11,6 +11,11 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 
+#install v4l2-ctl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    v4l-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
