@@ -114,3 +114,11 @@ class CameraAgent(agent.Agent):
     async def setup(self):
         print(f"{self.jid} is ready.")
         self.add_behaviour(self.ListenToImageRequestBehaviour())
+
+    async def stop(self):
+        print("Stopping agent...")
+        if self.camera_stream is not None:
+            self.camera_stream.release()
+            print("Camera stream released.")
+
+        await super().stop()
