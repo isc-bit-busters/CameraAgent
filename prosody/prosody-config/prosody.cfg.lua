@@ -105,10 +105,10 @@ s2s_secure_auth = false
 limits = {
   stanza_size=9437184;
   c2s = {
-    rate = "10kb/s";
+    rate = "1mb/s";
   };
   s2sin = {
-    rate = "30kb/s";
+    rate = "5mb/s";
   };
 }
 
