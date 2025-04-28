@@ -102,7 +102,7 @@ class CameraAgent(agent.Agent):
  
             # === Apply undistortion ===
             #frame = cv2.undistort(frame, self.agent.camera_matrix, self.agent.dist_coeffs)
-            frame = cv2.resize(frame, (1920, 1080))
+            frame = cv2.resize(frame, (800, 600))
             # Add timestamp
             from datetime import datetime
             current_time = datetime.now().strftime("%H:%M:%S.%f")[:-3]
