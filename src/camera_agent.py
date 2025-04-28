@@ -30,28 +30,28 @@ def find_logitech_c920(max_cameras=10):
         if int(width) == 1920 and int(height) == 1080:
             print(f"✅ Possible Logitech C920 found at index {index}")
 
-            # Set zoom to minimum (100)
-            try:
-                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'zoom_absolute=100'], check=True, capture_output=True)
-                print(f"Zoom set to 100 for camera {index}")
-            except subprocess.CalledProcessError as e:
-                print(f"❌ Could not set zoom for camera {index}: {e}")
+            # # Set zoom to minimum (100)
+            # try:
+            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'zoom_absolute=100'], check=True, capture_output=True)
+            #     print(f"Zoom set to 100 for camera {index}")
+            # except subprocess.CalledProcessError as e:
+            #     print(f"❌ Could not set zoom for camera {index}: {e}")
 
-            # Disable autofocus (optional, but often helpful for consistent results)
-            try:
-                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_automatic_continuous=0'], check=True, capture_output=True)
-                print(f"Autofocus disabled for camera {index}")
-            except subprocess.CalledProcessError as e:
-                print(f"❌ Could not disable autofocus for camera {index}: {e}")
+            # # Disable autofocus (optional, but often helpful for consistent results)
+            # try:
+            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_automatic_continuous=0'], check=True, capture_output=True)
+            #     print(f"Autofocus disabled for camera {index}")
+            # except subprocess.CalledProcessError as e:
+            #     print(f"❌ Could not disable autofocus for camera {index}: {e}")
 
-            # Set focus to a fixed value (adjust the value as needed)
-            try:
-                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_absolute=0'], check=True, capture_output=True)
-                print(f"Focus set to 0 for camera {index}")
-            except subprocess.CalledProcessError as e:
-                print(f"❌ Could not set focus for camera {index}: {e}")
+            # # Set focus to a fixed value (adjust the value as needed)
+            # try:
+            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_absolute=0'], check=True, capture_output=True)
+            #     print(f"Focus set to 0 for camera {index}")
+            # except subprocess.CalledProcessError as e:
+            #     print(f"❌ Could not set focus for camera {index}: {e}")
             
-            cap.release()
+            # cap.release()
             return index
  
         cap.release()
