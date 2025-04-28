@@ -43,11 +43,7 @@ class CameraAgent(agent.Agent):
             super().__init__()
             self.jid = jid
             self.thread = thread 
-
-            # Load calibration data
-            calibration = np.load('camera_calibration.npz')
-            self.mtx = calibration['camera_matrix']         # camera matrix
-            self.dist = calibration['dist_coeffs'] 
+            
 
         async def run(self):
             print("Capturing image...")
@@ -62,7 +58,7 @@ class CameraAgent(agent.Agent):
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
                 # Load calibration data only once
-                calibration = np.load('camera_calibration.npz')
+                calibration = np.load('src/camera_agent.py')
                 self.agent.mtx = calibration['camera_matrix']
                 self.agent.dist = calibration['dist_coeffs']
 
@@ -107,7 +103,7 @@ class CameraAgent(agent.Agent):
 
             await self.send(msg)
             print(f"Photo sent to {self.jid} with thread {self.thread}.")
-            
+
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
             print("Waiting for request...")
