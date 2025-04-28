@@ -31,25 +31,25 @@ def find_logitech_c920(max_cameras=10):
             print(f"✅ Possible Logitech C920 found at index {index}")
 
             # # Set zoom to minimum (100)
-            # try:
-            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'zoom_absolute=100'], check=True, capture_output=True)
-            #     print(f"Zoom set to 100 for camera {index}")
-            # except subprocess.CalledProcessError as e:
-            #     print(f"❌ Could not set zoom for camera {index}: {e}")
+            try:
+                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'zoom_absolute=100'], check=True, capture_output=True)
+                print(f"Zoom set to 100 for camera {index}")
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Could not set zoom for camera {index}: {e}")
 
-            # # Disable autofocus (optional, but often helpful for consistent results)
-            # try:
-            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_automatic_continuous=0'], check=True, capture_output=True)
-            #     print(f"Autofocus disabled for camera {index}")
-            # except subprocess.CalledProcessError as e:
-            #     print(f"❌ Could not disable autofocus for camera {index}: {e}")
+            # Disable autofocus (optional, but often helpful for consistent results)
+            try:
+                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_automatic_continuous=0'], check=True, capture_output=True)
+                print(f"Autofocus disabled for camera {index}")
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Could not disable autofocus for camera {index}: {e}")
 
-            # # Set focus to a fixed value (adjust the value as needed)
-            # try:
-            #     subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_absolute=0'], check=True, capture_output=True)
-            #     print(f"Focus set to 0 for camera {index}")
-            # except subprocess.CalledProcessError as e:
-            #     print(f"❌ Could not set focus for camera {index}: {e}")
+            # Set focus to a fixed value (adjust the value as needed)
+            try:
+                subprocess.run(['v4l2-ctl', '-d', f'/dev/video{index}', '-c', 'focus_absolute=0'], check=True, capture_output=True)
+                print(f"Focus set to 0 for camera {index}")
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Could not set focus for camera {index}: {e}")
             
             # cap.release()
             return index
@@ -102,7 +102,7 @@ class CameraAgent(agent.Agent):
  
             # === Apply undistortion ===
             #frame = cv2.undistort(frame, self.agent.camera_matrix, self.agent.dist_coeffs)
-            frame = cv2.resize(frame, (800, 600))
+            # frame = cv2.resize(frame, (800, 600))
             # Add timestamp
             from datetime import datetime
             current_time = datetime.now().strftime("%H:%M:%S.%f")[:-3]
