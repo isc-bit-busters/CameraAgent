@@ -12,6 +12,31 @@ class CameraAgent(agent.Agent):
         self.last_sent_time = None
         self.registered_agents = []
         self.camera_stream = None
+        self.mtx = None
+        self.dist = None
+
+    
+    def find_c920(self):
+        """Tries to find the Logitech C920 camera automatically."""
+        print("Searching for C920 camera...")
+
+        for index in range(5):  # try the first 5 devices
+            cap = cv2.VideoCapture(index)
+            if not cap.isOpened():
+                continue
+
+            # Set a high resolution to check if supported
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+            ret, frame = cap.read()
+            if ret and frame is not None and frame.shape[1] == 1920 and frame.shape[0] == 1080:
+                print(f"Found candidate camera at index {index}.")
+                return cap  # return the VideoCapture object
+
+            cap.release()
+
+        print("No suitable C920 camera found.")
+        return None
         
     class SendPhotoBehaviour(behaviour.OneShotBehaviour):
         def __init__(self, jid, thread):
@@ -27,14 +52,19 @@ class CameraAgent(agent.Agent):
         async def run(self):
             print("Capturing image...")
 
-            # Initialize the camera
-            
+            # Initialize the camera if not already done
             if self.agent.camera_stream is None:
-                self.agent.camera_stream = cv2.VideoCapture(0)
-                self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+                self.agent.camera_stream = self.agent.find_c920()
+                if self.agent.camera_stream is None:
+                    print("Failed to find C920 camera.")
+                    return
 
+                self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+                # Load calibration data only once
+                calibration = np.load('camera_calibration.npz')
+                self.agent.mtx = calibration['camera_matrix']
+                self.agent.dist = calibration['dist_coeffs']
 
             camera = self.agent.camera_stream
 
@@ -47,20 +77,13 @@ class CameraAgent(agent.Agent):
                 print("Failed to capture image.")
                 return
 
-            # Undistort the frame using calibration
+            # Undistort the frame
             h, w = frame.shape[:2]
-            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.agent.mtx, self.agent.dist, (w,h), 1, (w,h))
-
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.agent.mtx, self.agent.dist, (w, h), 1, (w, h))
             frame_undistorted = cv2.undistort(frame, self.agent.mtx, self.agent.dist, None, newcameramtx)
+            frame = frame_undistorted
 
-
-            frame = frame_undistorted  
-
-            if not ret:
-                print("Failed to capture image.")
-                return
-
-            # add timestamp to the image
+            # Add timestamp
             from datetime import datetime
             current_time = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             cv2.putText(frame, current_time, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -71,7 +94,7 @@ class CameraAgent(agent.Agent):
             filename = f"photo_{thread_stripped}.jpg"
             cv2.imwrite(filename, frame)
 
-            print(f"Image captured and saved as '{filename}'.")
+            print(f"Image saved as '{filename}'.")
 
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
@@ -82,12 +105,9 @@ class CameraAgent(agent.Agent):
             msg.thread = str(self.thread)
             msg.metadata = {"thread": str(self.thread)}
 
-            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
-
             await self.send(msg)
-            print("Photo sent to ", str(self.jid))
-            print("Message: ", msg)
-
+            print(f"Photo sent to {self.jid} with thread {self.thread}.")
+            
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
             print("Waiting for request...")
