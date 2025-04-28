@@ -4,6 +4,7 @@ import base64
 import aiofiles
 from spade import agent, behaviour
 from spade.message import Message
+import numpy as np
 
 class CameraAgent(agent.Agent):
     def __init__(self, jid, password):
@@ -18,6 +19,11 @@ class CameraAgent(agent.Agent):
             self.jid = jid
             self.thread = thread 
 
+            # Load calibration data
+            calibration = np.load('camera_calibration.npz')
+            self.mtx = calibration['camera_matrix']         # camera matrix
+            self.dist = calibration['dist_coeffs'] 
+
         async def run(self):
             print("Capturing image...")
 
@@ -26,6 +32,9 @@ class CameraAgent(agent.Agent):
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(0)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
 
             camera = self.agent.camera_stream
 
@@ -33,6 +42,19 @@ class CameraAgent(agent.Agent):
                 camera.grab()
 
             ret, frame = camera.read()
+
+            if not ret:
+                print("Failed to capture image.")
+                return
+
+            # Undistort the frame using calibration
+            h, w = frame.shape[:2]
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(self.agent.mtx, self.agent.dist, (w,h), 1, (w,h))
+
+            frame_undistorted = cv2.undistort(frame, self.agent.mtx, self.agent.dist, None, newcameramtx)
+
+
+            frame = frame_undistorted  
 
             if not ret:
                 print("Failed to capture image.")
