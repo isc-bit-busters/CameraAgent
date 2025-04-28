@@ -58,7 +58,7 @@ class CameraAgent(agent.Agent):
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
                 # Load calibration data only once
-                calibration = np.load('src/camera_agent.py')
+                calibration = np.load('src/camera_calibration.npz')
                 self.agent.mtx = calibration['camera_matrix']
                 self.agent.dist = calibration['dist_coeffs']
 
