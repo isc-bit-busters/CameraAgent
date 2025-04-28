@@ -18,7 +18,7 @@ def find_logitech_c920(max_cameras=10):
             continue
  
         # Try to get a high resolution to guess it's a C920
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2500)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
