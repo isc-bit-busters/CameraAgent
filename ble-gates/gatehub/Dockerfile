@@ -10,6 +10,7 @@ RUN apt-get update && \
     libgl1-mesa-glx \
     bluez \
     dbus \
+    bluetooth \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

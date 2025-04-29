@@ -12,7 +12,7 @@ GATES = [
     {"name": "e2", "address": "D7:09:01:AC:78:08", "topic": "gate4/ir"},
 ]
 
-MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
+MQTT_BROKER = os.getenv("MQTT_BROKER", "emqx")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.getenv("MQTT_USERNAME")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
