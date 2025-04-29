@@ -22,7 +22,7 @@ def find_logitech_c920(max_cameras=10):
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
- 
+
         print(f"Camera {index}: {int(width)}x{int(height)}")
  
         # Heuristic: C920 can do 1920x1080 easily
@@ -88,6 +88,8 @@ class CameraAgent(agent.Agent):
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(self.agent.camera_index)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
  
             camera = self.agent.camera_stream
  
