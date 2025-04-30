@@ -72,6 +72,9 @@ async def handle_gate(gate, mqtt_client):
             nonlocal reconnect_task
             if not connected_once:
                 return
+            
+            mqtt_client.publish(gate["topic"], "disconnected")
+            
             if reconnect_task is None or reconnect_task.done():
                 reconnect_task = asyncio.create_task(reconnect())
 
@@ -143,6 +146,7 @@ async def handle_gate(gate, mqtt_client):
             await client.start_notify(IR_CHAR_UUID, ir_handler)
             print(f"📱 Listening for IR on {name}...", flush=True)
             connected_once = True
+            mqtt_client.publish(gate["topic"], "connected")
             return client
 
         except Exception as e:
