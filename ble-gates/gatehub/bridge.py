@@ -25,7 +25,7 @@ def on_connect(client, userdata, flags, rc, properties=None):
     if rc == 0:
         client.subscribe("gate/mac_config") 
     else:
-        print("❌ Failed to connect to MQTT broker.")
+        print("❌ Failed to connect to MQTT broker.", flush=True)
 
 def on_message(client, userdata, msg):
     print(f"📩 Received on {msg.topic}: {msg.payload.decode()}", flush=True)
@@ -49,38 +49,67 @@ async def wait_for_broker(host, port, timeout=30):
             await asyncio.sleep(2)
     raise RuntimeError("❌ MQTT broker unreachable after timeout.")
 
-async def connect_and_listen(gate, mqtt_client):
-    try:
-        await wait_for_ble_device(gate["address"].upper(), gate["name"])
+async def handle_gate(gate, mqtt_client):
+    address = gate["address"].upper()
+    name = gate["name"]
+
+    async def connect_and_subscribe():
+        print(f"🔌 Attempting connection to {name}", flush=True)
+        await wait_for_ble_device(address, name)
         await asyncio.sleep(1)
-        client = BleakClient(gate["address"].upper(), timeout=30.0)
-        await client.connect()
 
-        if client.is_connected:
-            print(f"🔗 Connected to {gate['name']}", flush=True)
-            await client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
+        client = BleakClient(address, timeout=30.0)
 
-            async def ir_handler(_, data):
-                state = data[0]
-                print(f"[{gate['name']}] IR State: {state}", flush=True)
-                color = GREEN_COLOR if state == 1 else BLUE_COLOR
-                message = "object_detected" if state == 1 else "clear"
+        def on_disconnect(client):
+            print(f"🔌 Disconnected from {name}. Reconnecting...", flush=True)
+            asyncio.create_task(reconnect())
+
+        async def reconnect():
+            while True:
                 try:
-                    if client.is_connected:
-                        await client.write_gatt_char(LED_CHAR_UUID, color, response=False)
+                    await client.disconnect()
+                except:
+                    pass
+                try:
+                    new_client = await connect_and_subscribe()
+                    if new_client:
+                        break
                 except Exception as e:
-                    print(f"⚠️ LED write failed: {e}", flush=True)
-                print(f"📤 Publishing to {gate['topic']}: {message}", flush=True)
-                mqtt_client.publish(gate["topic"], message)
+                    print(f"🔁 Retry failed for {name}: {e}", flush=True)
+                await asyncio.sleep(5)
 
-            await client.start_notify(IR_CHAR_UUID, ir_handler)
-            print(f"📱 Listening for IR on {gate['name']}...", flush=True)
-            return client
-        else:
-            print(f"❌ Could not connect to {gate['name']}", flush=True)
-    except Exception as e:
-        print(f"❌ Failed to connect to {gate['name']}: {e}", flush=True)
-    return None
+        try:
+            await client.connect()
+            client.set_disconnected_callback(on_disconnect)
+
+            if client.is_connected:
+                print(f"🔗 Connected to {name}", flush=True)
+                await client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
+
+                async def ir_handler(_, data):
+                    state = data[0]
+                    print(f"[{name}] IR State: {state}", flush=True)
+                    color = GREEN_COLOR if state == 1 else BLUE_COLOR
+                    message = "object_detected" if state == 1 else "clear"
+                    try:
+                        if client.is_connected:
+                            await client.write_gatt_char(LED_CHAR_UUID, color, response=False)
+                    except Exception as e:
+                        print(f"⚠️ LED write failed: {e}", flush=True)
+                    print(f"📤 Publishing to {gate['topic']}: {message}", flush=True)
+                    mqtt_client.publish(gate["topic"], message)
+
+                await client.start_notify(IR_CHAR_UUID, ir_handler)
+                print(f"📱 Listening for IR on {name}...", flush=True)
+                return client
+            else:
+                print(f"❌ Could not connect to {name}", flush=True)
+        except Exception as e:
+            print(f"❌ Failed to connect to {name}: {e}", flush=True)
+        return None
+
+    return await connect_and_subscribe()
+
 
 async def wait_for_ble_device(address, name, timeout=60):
     print(f"🔍 Waiting for BLE device {name} ({address}) to appear...", flush=True)
@@ -111,7 +140,7 @@ async def update_gates_from_config(config_message, mqtt_client):
                     GATES.append(gate)
                     print(f"➕ Added gate: {gate}")
 
-                    client = await connect_and_listen(gate, mqtt_client)
+                    client = await handle_gate(gate, mqtt_client)
                     if client:
                         connected_clients.append(client)
                 else:
@@ -143,7 +172,7 @@ async def main():
     connected_clients = []
 
     for gate in GATES:
-        client = await connect_and_listen(gate, mqtt_client)
+        client = await handle_gate(gate, mqtt_client)
         if client:
             connected_clients.append(client)
         await asyncio.sleep(3)  # avoid BlueZ connection overlap
