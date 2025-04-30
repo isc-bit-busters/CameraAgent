@@ -65,15 +65,19 @@ async def handle_gate(gate, mqtt_client):
         print(f"🔌 Attempting connection to {name}", flush=True)
         reconnect_task = None
         connected_once = False
+        disconnected_sent = False
         await wait_for_ble_device(address, name)
         await asyncio.sleep(1)
 
         def on_disconnect(_):
             nonlocal reconnect_task
-            if not connected_once:
+            nonlocal disconnected_sent
+            
+            if not connected_once or disconnected_sent:
                 return
             
             mqtt_client.publish(gate["topic"], "disconnected")
+            disconnected_sent = True
             
             if reconnect_task is None or reconnect_task.done():
                 reconnect_task = asyncio.create_task(reconnect())
@@ -99,6 +103,7 @@ async def handle_gate(gate, mqtt_client):
 
         async def reconnect():
             nonlocal client
+            nonlocal disconnected_sent
             async with RECONNECT_LOCKS[address]:
                 await asyncio.sleep(5)
                 while True:
@@ -122,6 +127,8 @@ async def handle_gate(gate, mqtt_client):
                             await new_client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
                             await new_client.start_notify(IR_CHAR_UUID, ir_handler)
                             client = new_client
+                            mqtt_client.publish(gate["topic"], "reconnected")
+                            disconnected_sent = False
                             return
                     except Exception as e:
                         if "InProgress" in str(e):
@@ -183,6 +190,7 @@ async def update_gates_from_config(config_message, mqtt_client):
 
             if isinstance(new_gates, list):
                 print(f"🛠️ Adding {len(new_gates)} new gate(s)...", flush=True)
+                mqtt_client.publish("gate/mac_config/ack", f"✅ Received {len(new_gates)} gate(s).")
                 for gate in new_gates:
                     address = gate["address"].upper()
                     if not any(g["address"].upper() == address for g in GATES):
@@ -196,8 +204,10 @@ async def update_gates_from_config(config_message, mqtt_client):
                         print(f"⚠️ Gate {address} already exists. Skipping.", flush=True)
             else:
                 print("❌ Config received is not a list or object.", flush=True)
+                mqtt_client.publish("gate/mac_config/ack", "❌ Invalid config format")
         except json.JSONDecodeError as e:
             print(f"❌ Failed to parse config: {e}", flush=True)
+            mqtt_client.publish("gate/mac_config/ack", "❌ Invalid JSON format")
 
 async def main():
     await wait_for_broker(MQTT_BROKER, MQTT_PORT)
