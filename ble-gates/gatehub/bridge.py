@@ -114,16 +114,35 @@ async def main():
     print("📱 Test MQTT message sent to test/topic")
 
     print("🚀 Connecting to gates sequentially and waiting for events")
-    connected_clients = []
 
+    connected_clients = []
+    failed_gates = []
+
+    # Initial connection attempt
     for gate in GATES:
         client = await connect_and_listen(gate, mqtt_client)
         if client:
             connected_clients.append(client)
+        else:
+            failed_gates.append(gate)
         await asyncio.sleep(3)  # avoid BlueZ connection overlap
 
+    # Retry loop
     while True:
-        await asyncio.sleep(1)
+        if failed_gates:
+            print("🔁 Retrying failed BLE connections...")
+            still_failed = []
+            for gate in failed_gates:
+                client = await connect_and_listen(gate, mqtt_client)
+                if client:
+                    connected_clients.append(client)
+                    print(f"✅ Reconnected to {gate['name']}")
+                    mqtt_client.publish(gate["topic"], "reconnected")
+                else:
+                    still_failed.append(gate)
+                await asyncio.sleep(3)
+            failed_gates = still_failed
+        await asyncio.sleep(30)
 
 if __name__ == "__main__":
     try:
