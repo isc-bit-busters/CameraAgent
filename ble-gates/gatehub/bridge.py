@@ -7,6 +7,7 @@ import paho.mqtt.client as mqtt
 
 from asyncio import Lock
 RECONNECT_LOCKS = {}
+BLE_CONNECTION_LOCK = Lock()
 GATES_UPDATE_LOCK = Lock()
 
 GATES = []
@@ -62,6 +63,7 @@ async def handle_gate(gate, mqtt_client):
 
     async def connect_and_subscribe():
         print(f"🔌 Attempting connection to {name}", flush=True)
+        reconnect_task = None
         await wait_for_ble_device(address, name)
         await asyncio.sleep(1)
 
@@ -72,28 +74,46 @@ async def handle_gate(gate, mqtt_client):
             return client
 
         def on_disconnect(_):
-            print(f"🔌 Disconnected from {name}. Reconnecting...", flush=True)
-            asyncio.create_task(reconnect())
+            nonlocal reconnect_task
+            if reconnect_task is None or reconnect_task.done():
+                reconnect_task = asyncio.create_task(reconnect())
 
         async def reconnect():
             async with RECONNECT_LOCKS[address]:
                 await asyncio.sleep(5)
                 while True:
-                    print(f"🔄 Reconnecting to {name}...", flush=True)
                     try:
-                        await client.disconnect()
+                        print(f"🔄 Reconnecting to {name}...", flush=True)
+                        if client.is_connected:
+                            print(f"🔁 Already connected to {name}. Skipping reconnect.", flush=True)
+                            return
+                        try:
+                            await client.disconnect()
+                        except Exception as e:
+                            print(f"⚠️ Failed to disconnect from {name} : {e}", flush=True)
+
+                        async with BLE_CONNECTION_LOCK:
+                            await wait_for_ble_device(address, name)
+                            new_client = BleakClient(address, timeout=30.0)
+                            await new_client.connect()
+
+                        new_client.set_disconnected_callback(on_disconnect)
+                        if new_client.is_connected:
+                            print(f"🔗 Reconnected to {name}", flush=True)
+                            await new_client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
+                            await new_client.start_notify(IR_CHAR_UUID, ir_handler)
+                            return
                     except Exception as e:
-                        print(f"⚠️ Failed to disconnect from {name} : {e}", flush=True)
-                    try:
-                        new_client = await connect_and_subscribe()
-                        if new_client:
-                            break
-                    except Exception as e:
-                        print(f"🔁 Retry failed for {name}: {e}", flush=True)
-                    await asyncio.sleep(5)
+                        if "InProgress" in str(e):
+                            print(f"⚠️ BlueZ busy for {name}, retrying in 10s...", flush=True)
+                            await asyncio.sleep(10)
+                        else:
+                            print(f"🔁 Retry failed for {name}: {e}", flush=True)
+                            await asyncio.sleep(5)
 
         try:
-            await client.connect()
+            async with BLE_CONNECTION_LOCK:
+                await client.connect()
             client.set_disconnected_callback(on_disconnect)
 
             if not client.is_connected:
