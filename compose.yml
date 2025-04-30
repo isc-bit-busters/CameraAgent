@@ -14,6 +14,19 @@ services:
       - ./prosody/prosody-data:/var/lib/prosody
     command: ["prosody"]
 
+  emqx:
+    image: emqx/emqx:5.8.6
+    container_name: emqx
+    restart: unless-stopped
+    networks:
+      - xmpp_network
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+      - "8083:8083"
+      - "8084:8084"
+      - "18083:18083"
+
   agent:
     build: .
     container_name: agent
@@ -28,7 +41,7 @@ services:
       XMPP_PORT: 5222
       XMPP_USERNAME: "camera_agent"
       XMPP_PASSWORD: "top_secret"
-      MQTT_BROKER: localhost
+      MQTT_BROKER: emqx
       MQTT_PORT: 1883
       PYTHONUNBUFFERED: 1
     volumes:
@@ -37,31 +50,20 @@ services:
       - /dev/video0:/dev/video0
     privileged: true
 
-  emqx:
-    image: emqx/emqx:5.8.6
-    container_name: emqx
+  gatehub:
+    build: ./ble-gates/gatehub
+    container_name: gatehub
     restart: unless-stopped
     networks:
       - xmpp_network
-    ports:
-      - "1883:1883"
-      - "8883:8883"
-      - "8083:8083"
-      - "8084:8084"
-      - "18083:18083"
-
-  gatehub:
-      build: ./ble-gates/gatehub
-      container_name: gatehub
-      restart: unless-stopped
-      environment:
-        - MQTT_BROKER=localhost
-        - MQTT_PORT=1883
-      network_mode: host
-      privileged: true
-      volumes:
-        - /var/run/dbus:/var/run/dbus
-        - /dev:/dev
+    environment:
+      - MQTT_BROKER=emqx
+      - MQTT_PORT=1883
+    privileged: true
+    volumes:
+      - /var/run/dbus:/var/run/dbus
+      - /dev:/dev
+      - ./ble-gates/gatehub:/app
 
 networks:
   xmpp_network:
