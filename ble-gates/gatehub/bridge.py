@@ -5,6 +5,10 @@ import json
 from bleak import BleakClient, BleakScanner, BleakError
 import paho.mqtt.client as mqtt
 
+from asyncio import Lock
+RECONNECT_LOCKS = {}
+GATES_UPDATE_LOCK = Lock()
+
 GATES = []
 connected_clients = []
 
@@ -53,6 +57,9 @@ async def handle_gate(gate, mqtt_client):
     address = gate["address"].upper()
     name = gate["name"]
 
+    if gate["address"] not in RECONNECT_LOCKS:
+        RECONNECT_LOCKS[gate["address"]] = Lock()
+
     async def connect_and_subscribe():
         print(f"🔌 Attempting connection to {name}", flush=True)
         await wait_for_ble_device(address, name)
@@ -69,19 +76,21 @@ async def handle_gate(gate, mqtt_client):
             asyncio.create_task(reconnect())
 
         async def reconnect():
-            await asyncio.sleep(5)
-            while True:
-                try:
-                    await client.disconnect()
-                except:
-                    pass
-                try:
-                    new_client = await connect_and_subscribe()
-                    if new_client:
-                        break
-                except Exception as e:
-                    print(f"🔁 Retry failed for {name}: {e}", flush=True)
+            async with RECONNECT_LOCKS[address]:
                 await asyncio.sleep(5)
+                while True:
+                    print(f"🔄 Reconnecting to {name}...", flush=True)
+                    try:
+                        await client.disconnect()
+                    except Exception as e:
+                        print(f"⚠️ Failed to disconnect from {name} : {e}", flush=True)
+                    try:
+                        new_client = await connect_and_subscribe()
+                        if new_client:
+                            break
+                    except Exception as e:
+                        print(f"🔁 Retry failed for {name}: {e}", flush=True)
+                    await asyncio.sleep(5)
 
         try:
             await client.connect()
@@ -137,27 +146,30 @@ async def wait_for_ble_device(address, name, timeout=60):
 
 async def update_gates_from_config(config_message, mqtt_client):
     global GATES, connected_clients
-    try:
-        new_gates = json.loads(config_message)
-        if isinstance(new_gates, dict):
-            new_gates = [new_gates]  # Handle single object as list
 
-        if isinstance(new_gates, list):
-            print(f"🛠️ Adding {len(new_gates)} new gate(s)...", flush=True)
-            for gate in new_gates:
-                if not any(g["address"].upper() == gate["address"].upper() for g in GATES):
-                    GATES.append(gate)
-                    print(f"➕ Added gate: {gate}")
+    async with GATES_UPDATE_LOCK:
+        try:
+            new_gates = json.loads(config_message)
+            if isinstance(new_gates, dict):
+                new_gates = [new_gates]
 
-                    client = await handle_gate(gate, mqtt_client)
-                    if client:
-                        connected_clients.append(client)
-                else:
-                    print(f"⚠️ Gate {gate['address']} already exists. Skipping.", flush=True)
-        else:
-            print("❌ Config received is not a list or object.", flush=True)
-    except json.JSONDecodeError as e:
-        print(f"❌ Failed to parse config: {e}", flush=True)
+            if isinstance(new_gates, list):
+                print(f"🛠️ Adding {len(new_gates)} new gate(s)...", flush=True)
+                for gate in new_gates:
+                    address = gate["address"].upper()
+                    if not any(g["address"].upper() == address for g in GATES):
+                        GATES.append(gate)
+                        print(f"➕ Added gate: {gate}", flush=True)
+
+                        client = await handle_gate(gate, mqtt_client)
+                        if client:
+                            connected_clients.append(client)
+                    else:
+                        print(f"⚠️ Gate {address} already exists. Skipping.", flush=True)
+            else:
+                print("❌ Config received is not a list or object.", flush=True)
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse config: {e}", flush=True)
 
 async def main():
     await wait_for_broker(MQTT_BROKER, MQTT_PORT)
