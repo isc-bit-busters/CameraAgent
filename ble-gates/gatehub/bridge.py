@@ -67,18 +67,32 @@ async def handle_gate(gate, mqtt_client):
         await wait_for_ble_device(address, name)
         await asyncio.sleep(1)
 
-        client = BleakClient(address, timeout=30.0)
-
-        if client.is_connected:
-            print(f"🔄 Already connected to {name}, skipping reconnection.", flush=True)
-            return client
-
         def on_disconnect(_):
             nonlocal reconnect_task
             if reconnect_task is None or reconnect_task.done():
                 reconnect_task = asyncio.create_task(reconnect())
 
+        client = BleakClient(address, timeout=30.0, disconnected_callback=on_disconnect)
+
+        if client.is_connected:
+            print(f"🔄 Already connected to {name}, skipping reconnection.", flush=True)
+            return client
+        
+        async def ir_handler(_, data):
+            state = data[0]
+            print(f"[{name}] IR State: {state}", flush=True)
+            color = GREEN_COLOR if state == 1 else BLUE_COLOR
+            message = "object_detected" if state == 1 else "clear"
+            try:
+                if client.is_connected:
+                    await client.write_gatt_char(LED_CHAR_UUID, color, response=False)
+            except Exception as e:
+                print(f"⚠️ LED write failed: {e}", flush=True)
+            print(f"📤 Publishing to {gate['topic']}: {message}", flush=True)
+            mqtt_client.publish(gate["topic"], message)
+
         async def reconnect():
+            nonlocal client
             async with RECONNECT_LOCKS[address]:
                 await asyncio.sleep(5)
                 while True:
@@ -94,14 +108,14 @@ async def handle_gate(gate, mqtt_client):
 
                         async with BLE_CONNECTION_LOCK:
                             await wait_for_ble_device(address, name)
-                            new_client = BleakClient(address, timeout=30.0)
+                            new_client = BleakClient(address, timeout=30.0, disconnected_callback=on_disconnect)
                             await new_client.connect()
 
-                        new_client.set_disconnected_callback(on_disconnect)
                         if new_client.is_connected:
                             print(f"🔗 Reconnected to {name}", flush=True)
                             await new_client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
                             await new_client.start_notify(IR_CHAR_UUID, ir_handler)
+                            client = new_client
                             return
                     except Exception as e:
                         if "InProgress" in str(e):
@@ -114,7 +128,6 @@ async def handle_gate(gate, mqtt_client):
         try:
             async with BLE_CONNECTION_LOCK:
                 await client.connect()
-            client.set_disconnected_callback(on_disconnect)
 
             if not client.is_connected:
                 print(f"❌ Failed to connect to {name}. Retrying...", flush=True)
@@ -123,19 +136,6 @@ async def handle_gate(gate, mqtt_client):
 
             print(f"🔗 Connected to {name}", flush=True)
             await client.write_gatt_char(LED_CHAR_UUID, RED_COLOR, response=False)
-
-            async def ir_handler(_, data):
-                state = data[0]
-                print(f"[{name}] IR State: {state}", flush=True)
-                color = GREEN_COLOR if state == 1 else BLUE_COLOR
-                message = "object_detected" if state == 1 else "clear"
-                try:
-                    if client.is_connected:
-                        await client.write_gatt_char(LED_CHAR_UUID, color, response=False)
-                except Exception as e:
-                    print(f"⚠️ LED write failed: {e}", flush=True)
-                print(f"📤 Publishing to {gate['topic']}: {message}", flush=True)
-                mqtt_client.publish(gate["topic"], message)
 
             await client.start_notify(IR_CHAR_UUID, ir_handler)
             print(f"📱 Listening for IR on {name}...", flush=True)
