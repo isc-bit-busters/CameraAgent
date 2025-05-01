@@ -136,8 +136,23 @@ class CameraAgent(agent.Agent):
             print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
  
             await self.send(msg)
-            print("Photo sent to ", str(self.jid))
-            print("Message: ", msg)
+
+            print("Photo sent to ", str(self.jid), flush=True)
+            print("Message: ", msg, flush=True)
+
+            xmpp_username="receiverClient"
+            xmpp_server="prosody"
+            msg = Message(to=f"{xmpp_username}@{xmpp_server}")
+            msg.set_metadata("robot_id", "top_camera")
+            msg.set_metadata("type", "image")
+            msg.body = encoded_img
+
+            try:
+                await self.send(msg)
+                print(f"Image sent to {xmpp_username}@{xmpp_server} with thread {self.thread}.", flush=True)
+            except Exception as e:
+                print(f"Failed to send image to {xmpp_username}@{xmpp_server}: {e}", flush=True)
+            
  
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
