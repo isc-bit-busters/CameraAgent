@@ -1,3 +1,4 @@
+import os
 import cv2
 import asyncio
 import base64
@@ -6,6 +7,8 @@ import numpy as np
 from spade import agent, behaviour
 from spade.message import Message
 import subprocess
+from vision import detect_cubes_camera_agent, detect_walls, load_points, build_transformation
+
  
 def find_logitech_c920(max_cameras=10):
     """Try to find a Logitech C920 camera."""
@@ -98,11 +101,63 @@ class CameraAgent(agent.Agent):
                 camera.grab()
  
             ret, frame = camera.read()
- 
+            
+            walls = detect_walls(frame)
+            cubes = detect_cubes_camera_agent(frame)
+            wall_scale_factor = 0.8
+                # send a message to another agent
+            a_points, b_points = load_points("/agent/points_mapping.png")
+
+            trans = build_transformation(a_points, b_points)
+                
+            new_walls = []
+            for wall in walls:
+                x1, y1, x2, y2 = wall
+                length_x = abs(x2 - x1)
+                length_y = abs(y2 - y1)
+
+                if length_x > length_y:
+                    x1 = int(x1 - (length_x - length_x * wall_scale_factor) / 2)
+                    x2 = int(x2 + (length_x - length_x * wall_scale_factor) / 2)
+                else:
+                    y1 = int(y1 - (length_y - length_y * wall_scale_factor) / 2)
+                    y2 = int(y2 + (length_y - length_y * wall_scale_factor) / 2)
+
+                new_walls.append([x1, y1, x2, y2])
+
+            walls = new_walls
+            
+            # Apply the homography transformation to the walls
+            walls = [[tx1, ty1, tx2, ty2] 
+                    for x1, y1, x2, y2 in walls 
+                    for tx1, ty1 in [trans((x1, y1))]
+                    for tx2, ty2 in [trans((x2, y2))]]
+            
+            walls+= cubes
+            #save walls in a file and before check if this file exisits
+            if os.path.exists("/src/walls.txt"):
+                #reas file 
+                data = np.load("/src/walls.txt")
+                walls = data["walls"]
+                #delete file
+                os.remove("/src/walls.txt")
+            else:
+                #save walls in a file npz
+                np.savez("/src/walls.txt", walls=walls)
+            # send  walls to another agent
+
+            msg = Message(to=self.jid)
+            msg.body = f"{walls}"
+            msg.thread = str(self.thread)
+            msg.metadata = {"thread": str(self.thread)}
+            
+            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
+            await self.send(msg)
+            
             if not ret:
                 print("Failed to capture image.")
                 return
-            
+                
             # === Apply undistortion ===
             #frame = cv2.undistort(frame, self.agent.camera_matrix, self.agent.dist_coeffs)
             # frame = cv2.resize(frame, (800, 600))

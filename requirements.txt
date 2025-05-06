@@ -5,3 +5,4 @@ numpy==2.2.4
 opencv-python==4.11.0.86
 aiofiles
 spade==3.3.3
+pillow
