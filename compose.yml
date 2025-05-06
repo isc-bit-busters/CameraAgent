@@ -69,7 +69,6 @@ services:
     build:
       context: https://github.com/isc-bit-busters/RoboticArm.git
     container_name: roboticarm_container
-    network_mode: host
     networks:
       - xmpp_network
 
