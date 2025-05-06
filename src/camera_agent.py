@@ -7,7 +7,7 @@ import numpy as np
 from spade import agent, behaviour
 from spade.message import Message
 import subprocess
-from vision import detect_cubes_camera_agent, detect_walls, load_points, build_transformation
+from scr.vision import detect_cubes_camera_agent, detect_walls, load_points, build_transformation
 
  
 def find_logitech_c920(max_cameras=10):
