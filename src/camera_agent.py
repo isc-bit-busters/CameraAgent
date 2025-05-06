@@ -135,15 +135,17 @@ class CameraAgent(agent.Agent):
             
             walls+= cubes
             #save walls in a file and before check if this file exisits
-            if os.path.exists("//app/src/walls.txt"):
+            if os.path.exists("/app/src/walls.txt"):
                 #reas file 
                 data = np.load("/app/src/walls.txt")
                 walls = data["walls"]
                 #delete file
                 os.remove("/app/src/walls.txt")
+                print("Walls file deleted")
             else:
                 #save walls in a file npz
                 np.savez("/app/src/walls.txt", walls=walls)
+                print("Walls saved in /app/src/walls.txt")
             # send  walls to another agent
 
             
