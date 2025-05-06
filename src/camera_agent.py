@@ -148,10 +148,8 @@ class CameraAgent(agent.Agent):
 
             msg = Message(to=self.jid)
             msg.body = f"{walls}"
-            msg.thread = str(self.thread)
-            msg.metadata = {"thread": str(self.thread)}
-            
-            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
+           
+            print("sending walls to another agent")
             await self.send(msg)
             
             if not ret:
