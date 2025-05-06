@@ -106,7 +106,7 @@ class CameraAgent(agent.Agent):
             cubes = detect_cubes_camera_agent(frame)
             wall_scale_factor = 0.8
                 # send a message to another agent
-            a_points, b_points = load_points("/src/points_mapping.png")
+            a_points, b_points = load_points("/app/src/points_mapping.png")
 
             trans = build_transformation(a_points, b_points)
                 
@@ -135,15 +135,15 @@ class CameraAgent(agent.Agent):
             
             walls+= cubes
             #save walls in a file and before check if this file exisits
-            if os.path.exists("/src/walls.txt"):
+            if os.path.exists("//app/src/walls.txt"):
                 #reas file 
-                data = np.load("/src/walls.txt")
+                data = np.load("/app/src/walls.txt")
                 walls = data["walls"]
                 #delete file
-                os.remove("/src/walls.txt")
+                os.remove("/app/src/walls.txt")
             else:
                 #save walls in a file npz
-                np.savez("/src/walls.txt", walls=walls)
+                np.savez("/app/src/walls.txt", walls=walls)
             # send  walls to another agent
 
             msg = Message(to=self.jid)
