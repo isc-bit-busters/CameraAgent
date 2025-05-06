@@ -102,7 +102,7 @@ class CameraAgent(agent.Agent):
             if not ret:
                 print("Failed to capture image.")
                 return
- 
+            
             # === Apply undistortion ===
             #frame = cv2.undistort(frame, self.agent.camera_matrix, self.agent.dist_coeffs)
             # frame = cv2.resize(frame, (800, 600))
@@ -117,6 +117,7 @@ class CameraAgent(agent.Agent):
             filename = f"photo_{thread_stripped}.jpg"
             #resize the image to 640x480
             # frame = cv2.resize(frame, (640, 480))
+            
             cv2.imwrite(filename, frame)
 
             

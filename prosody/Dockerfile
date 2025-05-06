@@ -9,6 +9,14 @@ RUN tr -d '\r' < /tmp/entrypoint.sh > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh && \
     rm /tmp/entrypoint.sh
 
+RUN pip install opencv-python
+
+WORKDIR /camera
+
+COPY . .
+
+WORKDIR . . 
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["prosody"]
