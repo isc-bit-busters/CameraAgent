@@ -146,11 +146,7 @@ class CameraAgent(agent.Agent):
                 np.savez("/app/src/walls.txt", walls=walls)
             # send  walls to another agent
 
-            msg = Message(to=self.jid)
-            msg.body = f"{walls}"
-           
-            print("sending walls to another agent")
-            await self.send(msg)
+            
             
             if not ret:
                 print("Failed to capture image.")
@@ -193,7 +189,11 @@ class CameraAgent(agent.Agent):
 
             print("Photo sent to ", str(self.jid), flush=True)
             print("Message: ", msg, flush=True)
-
+            msg = Message(to=self.jid)
+            msg.body = f"{walls}"
+           
+            print("sending walls to another agent")
+            await self.send(msg)
             xmpp_username="receiverClient"
             xmpp_server="prosody"
             msg = Message(to=f"{xmpp_username}@{xmpp_server}")
