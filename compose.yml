@@ -65,6 +65,14 @@ services:
       - /dev:/dev
       - ./ble-gates/gatehub:/app
 
+  roboticarm:
+    build:
+      context: https://github.com/isc-bit-busters/RoboticArm.git
+    container_name: roboticarm_container
+    network_mode: host
+    networks:
+      - xmpp_network
+
 networks:
   xmpp_network:
 
