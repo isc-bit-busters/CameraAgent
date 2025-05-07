@@ -1,3 +1,4 @@
+import json
 import os
 import cv2
 import asyncio
@@ -236,7 +237,7 @@ class CameraAgent(agent.Agent):
                         data = np.load("/app/src/walls.npz")
                         walls = data["walls"]
                         msg = Message(to=sender)
-                        msg.body = f"{walls}"
+                        msg.body = json.dumps(walls.tolist())
                         
                         await self.send(msg)
                         print(f"walls: {walls}")
