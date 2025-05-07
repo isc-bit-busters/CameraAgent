@@ -201,7 +201,7 @@ class CameraAgent(agent.Agent):
             #     print("Walls sent to another agent.")
             # else:
             #     print("Walls have already been sent.")
-            await self.send(msg)
+            # await self.send(msg)
             xmpp_username="receiverClient"
             xmpp_server="prosody"
             msg = Message(to=f"{xmpp_username}@{xmpp_server}")
