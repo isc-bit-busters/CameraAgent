@@ -170,7 +170,7 @@ class CameraAgent(agent.Agent):
  
     class PeriodicalSendImageBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
-            
+            print("Sending image periodically...", flush=True)
             send_photo_behaviour = self.agent.SendPhotoBehaviour()
             self.agent.add_behaviour(send_photo_behaviour)
             
