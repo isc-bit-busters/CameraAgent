@@ -237,7 +237,9 @@ class CameraAgent(agent.Agent):
                         walls = data["walls"]
                         msg = Message(to=sender)
                         msg.body = f"{walls}"
+                        
                         await self.send(msg)
+                        print(f"walls: {walls}")
                         #TODO delete the file
                         print("Walls sent to another agent.")
                     else:
