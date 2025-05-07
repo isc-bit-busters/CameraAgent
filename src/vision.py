@@ -63,6 +63,7 @@ def build_transformation(a_points, b_points):
     
     return transform_point
 
+
 def detect_walls(img):
     # Load the image
     # add a filter  to the image
@@ -79,7 +80,6 @@ def detect_walls(img):
     # img = cv2.undistort(img, mtx, dist, None, newcameramtx)
 
     original_size = img.shape
-    original_size = (640,360)
     print("shape", img.shape)
     new_size = (1920, 1080)
     scale_factor = (
@@ -180,14 +180,7 @@ def detect_walls(img):
     return polygons
 
 def detect_cubes_camera_agent(img):
-    # resize the image to 1024x576
-    original_size = img.shape
-    original_size = (640,360)
-    new_size = (1920, 1080)
-    scale_factor = (
-        original_size[1] / new_size[0], original_size[0] / new_size[1]
-    )
-    img = cv2.resize(img, new_size)
+  
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     kernel = np.ones((3, 3), np.uint8)
@@ -229,19 +222,12 @@ def detect_cubes_camera_agent(img):
             final_contours.append(approx)
             cv2.drawContours(white_background, [approx], -1, (0, 255, 0), 3)
     polygons = []
-    #
+    # draw a rectangle around the detected contours
     for contour in final_contours:
         x, y, w, h = cv2.boundingRect(contour)
         cv2.rectangle(white_background, (x, y), (x + w, y + h), (255, 0, 0), 2)  # Draw rectangles in blue    
         polygons.append([x, y, x + w, y + h])
-    # Apply scale factor
-    polygons = [
-        [
-            int(p[0] * scale_factor[0]),
-            int(p[1] * scale_factor[1]),
-            int(p[2] * scale_factor[0]),
-            int(p[3] * scale_factor[1]),
-        ]
-        for p in polygons
-    ]
+    # Apply the inverted mask to the white background
+
+    
     return polygons
