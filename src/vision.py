@@ -79,7 +79,7 @@ def detect_walls(img):
     # img = cv2.undistort(img, mtx, dist, None, newcameramtx)
 
     original_size = img.shape
-    original_size = (1024,576)
+    original_size = (640,360)
     print("shape", img.shape)
     new_size = (1920, 1080)
     scale_factor = (
@@ -182,7 +182,7 @@ def detect_walls(img):
 def detect_cubes_camera_agent(img):
     # resize the image to 1024x576
     original_size = img.shape
-    original_size = (1024,576)
+    original_size = (640,360)
     new_size = (1920, 1080)
     scale_factor = (
         original_size[1] / new_size[0], original_size[0] / new_size[1]
