@@ -135,17 +135,17 @@ class CameraAgent(agent.Agent):
             
             walls+= cubes
             # #save walls in a file and before check if this file exisits
-            # if os.path.exists("/app/src/walls.npz"):
-            #     #reas file 
-            #     data = np.load("/app/src/walls.npz")
-            #     walls = data["walls"]
-            #     #delete file
-            #     os.remove("/app/src/walls.npz")
-            #     print("Walls file deleted")
-            # else:
-            #     #save walls in a file npz
-            #     np.savez("/app/src/walls", walls=walls)
-            #     print("Walls saved in /app/src/walls")
+            if os.path.exists("/app/src/walls.npz"):
+                #reas file 
+                data = np.load("/app/src/walls.npz")
+                walls = data["walls"]
+                #delete file
+                os.remove("/app/src/walls.npz")
+                print("Walls file deleted")
+            else:
+                #save walls in a file npz
+                np.savez("/app/src/walls", walls=walls)
+                print("Walls saved in /app/src/walls")
             # # send  walls to another agent
 
             
@@ -193,14 +193,14 @@ class CameraAgent(agent.Agent):
             print("Message: ", msg, flush=True)
          
             print("sending walls to another agent")
-            # if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
-            #     msg = Message(to=self.jid)
-            #     msg.body = f"{walls}"
-            #     await self.send(msg)
-            #     self.agent.walls_sent = True
-            #     print("Walls sent to another agent.")
-            # else:
-            #     print("Walls have already been sent.")
+            if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
+                msg = Message(to=self.jid)
+                msg.body = f"{walls}"
+                await self.send(msg)
+                self.agent.walls_sent = True
+                print("Walls sent to another agent.")
+            else:
+                print("Walls have already been sent.")
             # await self.send(msg)
             xmpp_username="receiverClient"
             xmpp_server="prosody"
