@@ -205,18 +205,22 @@ class CameraAgent(agent.Agent):
             # print("Walls sent to another agent.")
           
             # await self.send(msg)
-            xmpp_username="receiverClient"
-            xmpp_server="prosody"
-            msg = Message(to=f"{xmpp_username}@{xmpp_server}")
-            msg.set_metadata("robot_id", "top_camera")
-            msg.set_metadata("type", "image")
-            msg.body = encoded_img
 
-            try:
-                await self.send(msg)
-                print(f"Image sent to {xmpp_username}@{xmpp_server} with thread {self.thread}.", flush=True)
-            except Exception as e:
-                print(f"Failed to send image to {xmpp_username}@{xmpp_server}: {e}", flush=True)
+            # # REPACED WITH send_log_message
+            # xmpp_username="receiverClient"
+            # xmpp_server="prosody"
+            # msg = Message(to=f"{xmpp_username}@{xmpp_server}")
+            # msg.set_metadata("robot_id", "top_camera")
+            # msg.set_metadata("type", "image")
+            # msg.body = encoded_img
+
+            # try:
+            #     await self.send(msg)
+            #     print(f"Image sent to {xmpp_username}@{xmpp_server} with thread {self.thread}.", flush=True)
+            # except Exception as e:
+            #     print(f"Failed to send image to {xmpp_username}@{xmpp_server}: {e}", flush=True)
+
+            send_log_message(encoded_img, msg_type="image")
             
  
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
