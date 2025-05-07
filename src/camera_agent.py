@@ -144,7 +144,7 @@ class CameraAgent(agent.Agent):
                 data = np.load("/app/src/walls.npz")
                 walls = data["walls"]
                 #delete file
-                # os.remove("/app/src/walls.npz")
+                os.remove("/app/src/walls.npz")
                 # print("Walls file deleted")
             else:
                 #save walls in a file npz
