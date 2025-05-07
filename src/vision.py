@@ -79,6 +79,7 @@ def detect_walls(img):
     # img = cv2.undistort(img, mtx, dist, None, newcameramtx)
 
     original_size = img.shape
+    original_size = (1024,576)
     print("shape", img.shape)
     new_size = (1920, 1080)
     scale_factor = (
