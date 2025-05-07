@@ -84,72 +84,137 @@ class CameraAgent(agent.Agent):
             super().__init__()
             self.jid = jid
             self.thread = thread
-
+ 
         async def run(self):
             print("Capturing image...")
-
+ 
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(self.agent.camera_index)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
                 self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
 
+ 
             camera = self.agent.camera_stream
-
-            # Clear the buffer by grabbing multiple frames
+ 
             for _ in range(5):
                 camera.grab()
-
+ 
             ret, frame = camera.read()
+            
+            walls = detect_walls(frame)
+            cubes = detect_cubes_camera_agent(frame)
+            wall_scale_factor = 0.8
+                # send a message to another agent
+            a_points, b_points = load_points("/app/src/points_mapping.png")
 
+            trans = build_transformation(a_points, b_points)
+                
+            new_walls = []
+            for wall in walls:
+                x1, y1, x2, y2 = wall
+                length_x = abs(x2 - x1)
+                length_y = abs(y2 - y1)
+
+                if length_x > length_y:
+                    x1 = int(x1 - (length_x - length_x * wall_scale_factor) / 2)
+                    x2 = int(x2 + (length_x - length_x * wall_scale_factor) / 2)
+                else:
+                    y1 = int(y1 - (length_y - length_y * wall_scale_factor) / 2)
+                    y2 = int(y2 + (length_y - length_y * wall_scale_factor) / 2)
+
+                new_walls.append([x1, y1, x2, y2])
+
+            walls = new_walls
+            
+            # Apply the homography transformation to the walls
+            walls = [[tx1, ty1, tx2, ty2] 
+                    for x1, y1, x2, y2 in walls 
+                    for tx1, ty1 in [trans((x1, y1))]
+                    for tx2, ty2 in [trans((x2, y2))]]
+            
+            walls+= cubes
+            #save walls in a file and before check if this file exisits
+            if os.path.exists("/app/src/walls.npz"):
+                #reas file 
+                data = np.load("/app/src/walls.npz")
+                walls = data["walls"]
+                #delete file
+                os.remove("/app/src/walls.npz")
+                print("Walls file deleted")
+            else:
+                #save walls in a file npz
+                np.savez("/app/src/walls", walls=walls)
+                print("Walls saved in /app/src/walls")
+            # send  walls to another agent
+
+            
+            
             if not ret:
                 print("Failed to capture image.")
                 return
-
-            # Process walls and cubes
-            walls = detect_walls(frame)
-            cubes = detect_cubes_camera_agent(frame)
-            walls += cubes
-
-            # Save walls to a file if not already sent
-            if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
-                if os.path.exists("/app/src/walls.npz"):
-                    os.remove("/app/src/walls.npz")
-                    print("Existing walls file deleted.")
-                np.savez("/app/src/walls", walls=walls)
-                print("Walls saved in /app/src/walls")
-
-                # Send walls to another agent
-                msg = Message(to=self.jid)
-                msg.body = f"{walls}"
-                await self.send(msg)
-                self.agent.walls_sent = True  # Mark walls as sent
-                print("Walls sent to another agent.")
-            else:
-                print("Walls have already been sent. Skipping.")
-
-            # Add timestamp to the frame
+                
+            # === Apply undistortion ===
+            #frame = cv2.undistort(frame, self.agent.camera_matrix, self.agent.dist_coeffs)
+            # frame = cv2.resize(frame, (800, 600))
+            # Add timestamp
             from datetime import datetime
             current_time = datetime.now().strftime("%H:%M:%S.%f")[:-3]
             cv2.putText(frame, current_time, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
-            # Save and send the image
+ 
+            print(f"Picture for {self.thread} taken at {current_time}.")
+ 
             thread_stripped = self.thread.replace("-", "_")
             filename = f"photo_{thread_stripped}.jpg"
+            #resize the image to 640x480
+            # frame = cv2.resize(frame, (640, 480))
+            
             cv2.imwrite(filename, frame)
-            print(f"Image captured and saved as '{filename}'.")
 
+            
+
+ 
+            print(f"Image captured and saved as '{filename}'.")
+ 
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
-
+ 
             msg = Message(to=self.jid)
             msg.body = f"image {encoded_img}"
             msg.thread = str(self.thread)
             msg.metadata = {"thread": str(self.thread)}
-
+ 
+            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
+ 
             await self.send(msg)
-            print(f"Image sent to {self.jid} with thread {self.thread}.")
+
+            print("Photo sent to ", str(self.jid), flush=True)
+            print("Message: ", msg, flush=True)
+         
+            print("sending walls to another agent")
+            # if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
+            #     msg = Message(to=self.jid)
+            #     msg.body = f"{walls}"
+            #     await self.send(msg)
+            #     self.agent.walls_sent = True
+            #     print("Walls sent to another agent.")
+            # else:
+            #     print("Walls have already been sent.")
+            await self.send(msg)
+            xmpp_username="receiverClient"
+            xmpp_server="prosody"
+            msg = Message(to=f"{xmpp_username}@{xmpp_server}")
+            msg.set_metadata("robot_id", "top_camera")
+            msg.set_metadata("type", "image")
+            msg.body = encoded_img
+
+            try:
+                await self.send(msg)
+                print(f"Image sent to {xmpp_username}@{xmpp_server} with thread {self.thread}.", flush=True)
+            except Exception as e:
+                print(f"Failed to send image to {xmpp_username}@{xmpp_server}: {e}", flush=True)
+            
  
     class ListenToImageRequestBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
@@ -170,7 +235,7 @@ class CameraAgent(agent.Agent):
  
     class PeriodicalSendImageBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
-            print("Sending image periodically...", flush=True)
+            
             send_photo_behaviour = self.agent.SendPhotoBehaviour()
             self.agent.add_behaviour(send_photo_behaviour)
             
