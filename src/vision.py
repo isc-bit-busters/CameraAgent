@@ -64,6 +64,7 @@ def build_transformation(a_points, b_points):
     return transform_point
 
 
+
 def detect_walls(img):
     # Load the image
     # add a filter  to the image
@@ -231,3 +232,5 @@ def detect_cubes_camera_agent(img):
 
     
     return polygons
+
+
