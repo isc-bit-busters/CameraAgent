@@ -10,10 +10,13 @@ from spade.message import Message
 import subprocess
 from src.vision import detect_cubes_camera_agent, detect_walls, load_points, build_transformation
 
+from .logAgent import send_log_message
  
 def find_logitech_c920(max_cameras=10):
     """Try to find a Logitech C920 camera."""
     print("Searching for Logitech C920...")
+
+    send_log_message("Searching for Logitech C920...")
  
     for index in range(max_cameras):
         cap = cv2.VideoCapture(index)  
