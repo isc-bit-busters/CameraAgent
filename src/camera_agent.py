@@ -195,6 +195,14 @@ class CameraAgent(agent.Agent):
             msg.body = f"{walls}"
            
             print("sending walls to another agent")
+            if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
+                msg = Message(to=self.jid)
+                msg.body = f"{walls}"
+                await self.send(msg)
+                self.agent.walls_sent = True
+                print("Walls sent to another agent.")
+            else:
+                print("Walls have already been sent.")
             await self.send(msg)
             xmpp_username="receiverClient"
             xmpp_server="prosody"
