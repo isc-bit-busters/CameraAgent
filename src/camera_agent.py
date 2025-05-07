@@ -108,7 +108,7 @@ class CameraAgent(agent.Agent):
             
             walls = detect_walls(frame)
             cubes = detect_cubes_camera_agent(frame)
-            wall_scale_factor = 0.8
+            wall_scale_factor = 0.9
                 # send a message to another agent
             a_points, b_points = load_points("/app/src/points_mapping.png")
 
