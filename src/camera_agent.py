@@ -178,7 +178,7 @@ class CameraAgent(agent.Agent):
             
 
  
-            print(f"Image captured and saved as '{filename}'.")
+            print(f"Image captured and saved as '{filename}' {frame.shape}.")
  
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
@@ -190,7 +190,7 @@ class CameraAgent(agent.Agent):
             msg.metadata = {"thread": str(self.thread)}
  
             print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
- 
+            
             await self.send(msg)
 
             print("Photo sent to ", str(self.jid), flush=True)
