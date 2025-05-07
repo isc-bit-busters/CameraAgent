@@ -193,12 +193,12 @@ class CameraAgent(agent.Agent):
             print("Message: ", msg, flush=True)
          
             # if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
-            print("sending walls to another agent")
-            msg = Message(to=self.jid)
-            msg.body = f"{walls}"
-            await self.send(msg)
-            self.agent.walls_sent = True
-            print("Walls sent to another agent.")
+            # print("sending walls to another agent")
+            # msg = Message(to=self.jid)
+            # msg.body = f"{walls}"
+            # await self.send(msg)
+            # self.agent.walls_sent = True
+            # print("Walls sent to another agent.")
           
             # await self.send(msg)
             xmpp_username="receiverClient"
@@ -229,8 +229,22 @@ class CameraAgent(agent.Agent):
                     print(f"Received image request from {sender} with thread {thread}.")
                     send_photo_behaviour = self.agent.SendPhotoBehaviour(sender, thread)
                     self.agent.add_behaviour(send_photo_behaviour)
+                elif command == "request_walls":
+                    print(f"Received walls request from {sender} with thread {thread}.")
+                    # send walls to the sender
+                    if os.path.exists("/app/src/walls.npz"):
+                        data = np.load("/app/src/walls.npz")
+                        walls = data["walls"]
+                        msg = Message(to=sender)
+                        msg.body = f"{walls}"
+                        await self.send(msg)
+                        #TODO delete the file
+                        print("Walls sent to another agent.")
+                    else:
+                        print("No walls file found.")
                 else:
                     print("Received unknown command.")
+             
  
     class PeriodicalSendImageBehaviour(behaviour.CyclicBehaviour):
         async def run(self):
