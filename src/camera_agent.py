@@ -191,9 +191,7 @@ class CameraAgent(agent.Agent):
 
             print("Photo sent to ", str(self.jid), flush=True)
             print("Message: ", msg, flush=True)
-            msg = Message(to=self.jid)
-            msg.body = f"{walls}"
-           
+         
             print("sending walls to another agent")
             if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
                 msg = Message(to=self.jid)
