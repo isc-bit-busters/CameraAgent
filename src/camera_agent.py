@@ -189,12 +189,12 @@ class CameraAgent(agent.Agent):
             msg.thread = str(self.thread)
             msg.metadata = {"thread": str(self.thread)}
  
-            print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
+            # print(f"Sending to \n\n\n{self.thread} --> {msg.body}\n\n\n")
             
             await self.send(msg)
 
             print("Photo sent to ", str(self.jid), flush=True)
-            print("Message: ", msg, flush=True)
+            # print("Message: ", msg, flush=True)
          
             # if not hasattr(self.agent, "walls_sent") or not self.agent.walls_sent:
             # print("sending walls to another agent")
