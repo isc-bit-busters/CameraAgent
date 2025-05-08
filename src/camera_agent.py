@@ -175,9 +175,10 @@ class CameraAgent(agent.Agent):
             
 
  
-            print(f"Image captured and saved as '{filename}' {frame.shape}.")
+            
             # resize the image to 640x360
             frame = cv2.resize(frame, (640, 360))
+            print(f"Image captured and saved as '{filename}' {frame.shape}.")
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
