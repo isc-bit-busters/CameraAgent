@@ -82,12 +82,12 @@ def detect_walls(img):
 
     original_size = img.shape
     print("shape", img.shape)
-    new_size = (1024, 576)
+    new_size = (1920, 1080)
     scale_factor = (
         original_size[1] / new_size[0], original_size[0] / new_size[1]
     )
 
-    # img = cv2.resize(img, new_size)
+    img = cv2.resize(img, new_size)
 
     lower_red1 = np.array([0, 100, 100])
     upper_red1 = np.array([10, 255, 255])
