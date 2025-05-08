@@ -82,7 +82,7 @@ def detect_walls(img):
 
     original_size = img.shape
     print("shape", img.shape)
-    new_size = (1920, 1080)
+    new_size = (1024, 576)
     scale_factor = (
         original_size[1] / new_size[0], original_size[0] / new_size[1]
     )
