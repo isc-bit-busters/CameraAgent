@@ -181,13 +181,13 @@ def detect_walls(img):
     return polygons
 
 def detect_cubes_camera_agent(img):
-    
     # resize the image to 1920x1080
     original_size = img.shape
     print("shape", img.shape)
     new_size = (1920, 1080)
     img = cv2.resize(img, new_size)
-    # Convert the image to HSV color space
+  
+    # Convert the image to HSV color space:w
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     kernel = np.ones((3, 3), np.uint8)
 
