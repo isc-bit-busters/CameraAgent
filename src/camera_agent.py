@@ -111,6 +111,7 @@ class CameraAgent(agent.Agent):
                 # send a message to another agent
             a_points, b_points = load_points("/app/src/points_mapping.png")
 
+            
             trans = build_transformation(a_points, b_points)
                 
             new_walls = []
