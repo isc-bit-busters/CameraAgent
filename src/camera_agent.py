@@ -104,7 +104,7 @@ class CameraAgent(agent.Agent):
                 camera.grab()
  
             ret, frame = camera.read()
-            # frame = cv2.resize(frame, (1024, 576))
+            frame = cv2.resize(frame, (1024, 576))
             walls = detect_walls(frame)
             cubes = detect_cubes_camera_agent(frame)
             
@@ -178,7 +178,7 @@ class CameraAgent(agent.Agent):
  
             
             # resize the image to 640x360
-            frame = cv2.resize(frame, (640, 360))
+            # frame = cv2.resize(frame, (640, 360))
             cv2.imwrite(filename, frame)
             print(f"Image captured and saved as '{filename}' {frame.shape}.")
             async with aiofiles.open(filename, "rb") as img_file:
