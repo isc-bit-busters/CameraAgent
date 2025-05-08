@@ -94,8 +94,8 @@ class CameraAgent(agent.Agent):
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(self.agent.camera_index)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
  
             camera = self.agent.camera_stream
