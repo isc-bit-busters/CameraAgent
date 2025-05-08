@@ -181,7 +181,12 @@ def detect_walls(img):
     return polygons
 
 def detect_cubes_camera_agent(img):
-  
+    
+    # resize the image to 1920x1080
+    original_size = img.shape
+    print("shape", img.shape)
+    new_size = (1920, 1080)
+    img = cv2.resize(img, new_size)
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     kernel = np.ones((3, 3), np.uint8)
@@ -210,7 +215,7 @@ def detect_cubes_camera_agent(img):
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # Filter contours based on area
     min_area = 20  # Adjust this value as needed
-    max_area = 500
+    max_area = 1500
     filtered_contours = [contour for contour in contours if min_area < cv2.contourArea(contour) < max_area]
     # Draw all contours except the first
     final_contours = []
