@@ -33,7 +33,6 @@ def find_logitech_c920(max_cameras=10):
         print(f"Camera {index}: {int(width)}x{int(height)}")
  
         # Heuristic: C920 can do 1920x1080 easily
-        # Heuristic: C920 can do 1920x1080 easily
         if int(width) == 1920 and int(height) == 1080:
             print(f"✅ Possible Logitech C920 found at index {index}")
 
@@ -143,9 +142,6 @@ class CameraAgent(agent.Agent):
                 #reas file 
                 data = np.load("/app/src/walls.npz")
                 walls = data["walls"]
-                #delete file
-                os.remove("/app/src/walls.npz")
-                # print("Walls file deleted")
             else:
                 #save walls in a file npz
                 np.savez("/app/src/walls", walls=walls)
@@ -249,6 +245,7 @@ class CameraAgent(agent.Agent):
                         
                         await self.send(msg)
                         print(f"walls: {walls}")
+                        os.remove("/app/src/walls.npz")
                         #TODO delete the file
                         print("Walls sent to another agent.")
                     else:
