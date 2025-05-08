@@ -94,8 +94,8 @@ class CameraAgent(agent.Agent):
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(self.agent.camera_index)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
  
             camera = self.agent.camera_stream
@@ -170,7 +170,7 @@ class CameraAgent(agent.Agent):
             #resize the image to 640x480
             # frame = cv2.resize(frame, (640, 480))
             
-            cv2.imwrite(filename, frame)
+            
 
             
 
@@ -178,6 +178,7 @@ class CameraAgent(agent.Agent):
             
             # resize the image to 640x360
             frame = cv2.resize(frame, (640, 360))
+            cv2.imwrite(filename, frame)
             print(f"Image captured and saved as '{filename}' {frame.shape}.")
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
