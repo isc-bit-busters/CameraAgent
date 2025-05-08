@@ -95,8 +95,8 @@ class CameraAgent(agent.Agent):
             if self.agent.camera_stream is None:
                 self.agent.camera_stream = cv2.VideoCapture(self.agent.camera_index)
                 self.agent.camera_stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+                self.agent.camera_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
  
             camera = self.agent.camera_stream
@@ -105,7 +105,7 @@ class CameraAgent(agent.Agent):
                 camera.grab()
  
             ret, frame = camera.read()
-            frame = cv2.resize(frame, (1024, 576))
+            # frame = cv2.resize(frame, (1024, 576))
             walls = detect_walls(frame)
             cubes = detect_cubes_camera_agent(frame)
             wall_scale_factor = 0.8
@@ -179,7 +179,8 @@ class CameraAgent(agent.Agent):
 
  
             print(f"Image captured and saved as '{filename}' {frame.shape}.")
- 
+            # resize the image to 640x360
+            frame = cv2.resize(frame, (640, 360))
             async with aiofiles.open(filename, "rb") as img_file:
                 img_data = await img_file.read()
                 encoded_img = base64.b64encode(img_data).decode("utf-8")
